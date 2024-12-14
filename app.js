@@ -2,15 +2,18 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
+const cors = require('cors');
 
 // Routes
-// const bookingRoutes = require('./routes/bookings');
+const categoriesRouter = require('./routes/categories');
 
 // Middleware
-app.use(express.json()); 
+app.use(express.json());
+
+app.use(cors());
 
 // Use routes
-// app.use('/api/bookings', bookingRoutes);
+app.use('/api/categories', categoriesRouter);
 
 // Start the server
 const PORT = process.env.PORT || 3000;
