@@ -61,8 +61,10 @@ exports.getCategories = async (req, res) => {
   try {
     const query = 'SELECT * FROM categories';
     const [result] = await db.query(query);
+   
     res.status(200).json({ message: 'Categories fetched successfully', data: result });
   } catch (err) {
+    console.error('Error in getCategories endpoint:', err);
     res.status(500).json({ message: 'Error fetching categories', error: err.message });
   }
 };
