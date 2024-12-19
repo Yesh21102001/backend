@@ -31,62 +31,48 @@ const login = async (req, res) => {
 };
 
 const forgotPassword = async (req, res) => {
-    const { email } = req.body;
-  
-    // Validate input
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
-  
-    try {
-      // Check if user exists with provided email
-      const [user] = await db.execute('SELECT * FROM signUp WHERE email = ?', [email]);
-  
-      if (user.length === 0) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      // Generate OTP
-      const otp = crypto.randomInt(100000, 999999).toString(); // Random OTP
-      const otpExpiration = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 minutes
-  
-      // Store OTP and expiration time
-      await db.execute('UPDATE signUp SET otp = ?, otp_expiration = ? WHERE email = ?', [otp, otpExpiration, email]);
-  
-      // Simulate sending OTP via email (replace with actual email sending logic)
-      console.log(`OTP for ${email}: ${otp}`);
-  
-      res.status(200).json({ message: "OTP sent successfully. Please check your email." });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal Server Error' });
-    }
-  };
+  const { email } = req.body;
 
-  const verifyOtpAndResetPassword = async (req, res) => {
-    const { email, otp, newPassword } = req.body;
-  
-    // Validate input
-    if (!email || !otp || !newPassword) {
-      return res.status(400).json({ message: "Email, OTP, and new password are required" });
-    }
-  
-    try {
-      // Check if the user exists and OTP is correct
-      const [user] = await db.execute('SELECT * FROM signUp WHERE email = ? AND otp = ? AND otp_expiration > NOW()', [email, otp]);
-  
-      if (user.length === 0) {
-        return res.status(400).json({ message: "Invalid OTP or OTP expired" });
-      }
-  
-      // Update the user's password and reset OTP fields
-      await db.execute('UPDATE signUp SET password = ?, otp = NULL, otp_expiration = NULL WHERE email = ?', [newPassword, email]);
-  
-      res.status(200).json({ message: "Password reset successfully" });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal Server Error' });
-    }
-  };
+  // Validate input
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
 
-module.exports = { login, forgotPassword, verifyOtpAndResetPassword   };
+  try {
+    // Check if user exists with provided email
+    const [user] = await db.execute('SELECT * FROM signUp WHERE email = ?', [email]);
+
+    if (user.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const otpExpiration = new Date(Date.now() + 10 * 60 * 1000);
+    await db.execute('UPDATE signUp SET otp = ?, otp_expiration = ? WHERE email = ?', [otp, otpExpiration, email]);
+    console.log(`OTP for ${email}: ${otp}`);
+    res.status(200).json({ message: "OTP sent successfully. Please check your email." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+const verifyOtpAndResetPassword = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  if (!email || !otp || !newPassword) {
+    return res.status(400).json({ message: "Email, OTP, and new password are required" });
+  }
+  try {
+    const [user] = await db.execute('SELECT * FROM signUp WHERE email = ? AND otp = ? AND otp_expiration > NOW()', [email, otp]);
+    if (user.length === 0) {
+      return res.status(400).json({ message: "Invalid OTP or OTP expired" });
+    }
+    await db.execute('UPDATE signUp SET password = ?, otp = NULL, otp_expiration = NULL WHERE email = ?', [newPassword, email]);
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+module.exports = { login, forgotPassword, verifyOtpAndResetPassword };
