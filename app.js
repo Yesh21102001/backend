@@ -9,8 +9,8 @@ app.use('/', express.static(path.join(__dirname, 'CategoryImages')));
 
 // Routes
 const categoriesRouter = require('./routes/categories');
-const signupRoutes = require('./routes/SignUp');
-const loginRoutes = require('./routes/login');
+const authRouter = require('./routes/auth');
+const couponRouter = require('./routes/Coupons');
 
 // Middleware
 app.use(express.json());
@@ -18,8 +18,8 @@ app.use(cors());
 
 // Use routes
 app.use('/api/categories', categoriesRouter);
-app.use('/api/signup', signupRoutes);
-app.use('/api/login', loginRoutes);
+app.use('/api/authentication', authRouter);
+app.use('/api/Coupons', couponRouter);
 
 // Start the server
 const PORT = process.env.PORT || 3000;

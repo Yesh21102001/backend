@@ -1,75 +1,115 @@
-// // Controllers
-// const db = require('../db'); // Assuming a db.js file for MySQL connection
+const db = require('../db');  
 
-// exports.createCoupon = async (req, res) => {
-//   const { CouponName, UserId, CouponCode, OfferAmount, Discount, OfferAvailable, ExpiryDate } = req.body;
-//   const query = `INSERT INTO Coupons (CouponName, UserId, CouponCode, OfferAmount, Discount, OfferAvailable, ExpiryDate) 
-//                  VALUES (?, ?, ?, ?, ?, ?, ?)`;
-//   const values = [CouponName, UserId, CouponCode, OfferAmount, Discount, OfferAvailable, ExpiryDate];
+// create a coupon
+const createCoupon = (req, res) => {
+    const { CouponName, OfferAmount, Discount, OfferAvailable, ExpiryDate } = req.body;
 
-//   try {
-//     const [result] = await db.execute(query, values);
-//     res.status(201).json({ message: 'Coupon created', id: result.insertId });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
+    const query = `
+    INSERT INTO coupons (CouponName, OfferAmount, Discount, OfferAvailable, ExpiryDate)
+    VALUES (?, ?, ?, ?, ?)
+  `;
 
-// exports.getAllCoupons = async (req, res) => {
-//   const query = 'SELECT * FROM Coupons';
+    db.execute(query, [CouponName, OfferAmount, Discount, OfferAvailable, ExpiryDate], (err, result) => {
+        if (err) {
+            return res.status(500).json({ message: 'Error inserting coupon', error: err });
+        }
+        res.status(201).json({
+            message: 'Coupon created successfully',
+            couponId: result.insertId
+        });
+    });
+};
 
-//   try {
-//     const [rows] = await db.execute(query);
-//     res.status(200).json(rows);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
+// to get all coupons
+const getAllCoupons = async (req, res) => {
+    const query = 'SELECT * FROM coupons';
 
-// exports.getCouponById = async (req, res) => {
-//   const query = 'SELECT * FROM Coupons WHERE CouponID = ?';
-//   const values = [req.params.id];
+    try {
+        const [result] = await db.execute(query);
+        res.status(200).json(result);
+    } catch (err) {
+        return res.status(500).json({ message: 'Error fetching coupons', error: err });
+    }
+};
 
-//   try {
-//     const [rows] = await db.execute(query, values);
-//     if (rows.length === 0) {
-//       return res.status(404).json({ message: 'Coupon not found' });
-//     }
-//     res.status(200).json(rows[0]);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
+// to get a single coupon by ID
+const getCouponById = async (req, res) => {
+    const couponId = req.params.CouponID; // Match the parameter name
 
-// exports.updateCoupon = async (req, res) => {
-//   const { CouponName, UserId, CouponCode, OfferAmount, Discount, OfferAvailable, ExpiryDate } = req.body;
-//   const query = `UPDATE Coupons 
-//                  SET CouponName = ?, UserId = ?, CouponCode = ?, OfferAmount = ?, Discount = ?, OfferAvailable = ?, ExpiryDate = ? 
-//                  WHERE CouponID = ?`;
-//   const values = [CouponName, UserId, CouponCode, OfferAmount, Discount, OfferAvailable, ExpiryDate, req.params.id];
+    if (!couponId) {
+        return res.status(400).json({ message: 'Coupon ID is required' });
+    }
 
-//   try {
-//     const [result] = await db.execute(query, values);
-//     if (result.affectedRows === 0) {
-//       return res.status(404).json({ message: 'Coupon not found' });
-//     }
-//     res.status(200).json({ message: 'Coupon updated successfully' });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
+    const query = 'SELECT * FROM coupons WHERE CouponID = ?';
 
-// exports.deleteCoupon = async (req, res) => {
-//   const query = 'DELETE FROM Coupons WHERE CouponID = ?';
-//   const values = [req.params.id];
+    try {
+        const [result] = await db.execute(query, [couponId]);
 
-//   try {
-//     const [result] = await db.execute(query, values);
-//     if (result.affectedRows === 0) {
-//       return res.status(404).json({ message: 'Coupon not found' });
-//     }
-//     res.status(200).json({ message: 'Coupon deleted successfully' });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
+        if (result.length === 0) {
+            return res.status(404).json({ message: 'Coupon not found' });
+        }
+
+        res.status(200).json(result[0]);
+    } catch (err) {
+        return res.status(500).json({ message: 'Error fetching coupon', error: err });
+    }
+};
+
+// update a coupon
+const updateCoupon = (req, res) => {
+    const couponId = req.params.CouponID;
+    const { CouponName, OfferAmount, Discount, OfferAvailable, ExpiryDate } = req.body;
+
+    // Validate required fields
+    if (!CouponName || !OfferAmount || !Discount || !OfferAvailable || !ExpiryDate) {
+        return res.status(400).json({ message: 'All fields are required' });
+    }
+    const query = `
+      UPDATE coupons 
+      SET CouponName = ?, OfferAmount = ?, Discount = ?, OfferAvailable = ?, ExpiryDate = ?
+      WHERE CouponID = ?
+    `;
+    // Execute query
+    db.execute(query, [CouponName, OfferAmount, Discount, OfferAvailable, ExpiryDate, couponId], (err, result) => {
+        if (err) {
+            return res.status(500).json({ message: 'Error updating coupon', error: err });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Coupon not found' });
+        }
+        res.status(200).json({ message: 'Coupon updated successfully' });
+    });
+};
+
+//Delete Coupon
+const deleteCoupon = (req, res) => {
+    const couponId = req.params.CouponID;
+  
+    if (couponId === undefined) {
+      return res.status(400).json({ message: 'Coupon ID is required' });
+    }
+  
+    const query = 'DELETE FROM coupons WHERE CouponID = ?';
+  
+    db.execute(query, [couponId], (err, result) => {
+      if (err) {
+        console.error('Error deleting coupon:', err);
+        return res.status(500).json({ message: 'Error deleting coupon', error: err });
+      }
+  
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Coupon not found' });
+      }
+  
+      res.status(200).json({ message: 'Coupon deleted successfully' });
+    });
+  };
+  
+
+module.exports = {
+    createCoupon,
+    getAllCoupons,
+    getCouponById,
+    updateCoupon,
+    deleteCoupon
+};
