@@ -12,9 +12,9 @@ const categoriesRouter = require('./routes/categories');
 const authRouter = require('./routes/auth');
 const couponRouter = require('./routes/Coupons');
 
-// Middleware
-app.use(express.json());
-app.use(cors());
+app.use(cors()); // Enable CORS for all routes
+app.use(bodyParser.json());
+
 
 // Use routes
 app.use('/api/categories', categoriesRouter);
